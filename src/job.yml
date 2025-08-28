@@ -1,32 +1,32 @@
 $schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
-# Folder that contains your code entry point (train.py is under src/model/)
+
 code: .
 
 type: command
 name: diabetes-logreg-dev
 display_name: Diabetes Logistic Regression (Dev)
-
-# This puts runs under a named experiment (so not ".mlruns/0")
-experiment_name: diabetes-logreg   # <<< pick any descriptive name
-
+experiment_name: diabetes-logreg
 description: Train logistic regression with MLflow autologging
 
-# What to run inside the "code" folder
+
 command: >
   python model/train.py
   --training_data ${{inputs.training_data}}
-  --reg_rate ${{inputs.reg_rate}}  # <<< wire the numeric input below
+  --reg_rate ${{inputs.reg_rate}}
 
+# Pick ONE of these env forms (both avoid @latest):
+# A) Robust: explicit Docker image (official Microsoft image)
+environment:
+  image: mcr.microsoft.com/azureml/sklearn-0.24-ubuntu18.04-py37-cpu:latest
+# B) Or curated registry URL pinned to a version:
+# environment: azureml://registries/azureml/environments/AzureML-sklearn-0.24-ubuntu18.04-py37-cpu/versions/1
+
+compute: azureml:cpu-cluster
 
 inputs:
-  training_data: 
-    type: uri_folder 
-    path: ../experimentation/data
-  reg_rate: 0.01
-# Use a curated environment with sklearn & mlflow (fine for this challenge)
-environment: azureml:AzureML-sklearn-0.24-ubuntu18.04-py37-cpu:1
-# (You can switch later to a custom conda if needed.)
-
-# Your compute target name in AML workspace
-compute: azureml:cpu-cluster       # <<< replace with your real compute name
-
+  training_data:
+    type: uri_folder
+    path: ../experimentation/data     # from src/ → repo root → experimentation/data
+  reg_rate:
+    type: number
+    default: 0.1
