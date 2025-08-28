@@ -24,7 +24,7 @@ inputs:
     path: ../experimentation/data
   reg_rate: 0.01
 # Use a curated environment with sklearn & mlflow (fine for this challenge)
-environment: azureml:AzureML-sklearn-0.24-ubuntu18.04-py37-cpu@latest
+environment: azureml:AzureML-sklearn-0.24-ubuntu18.04-py37-cpu:1
 # (You can switch later to a custom conda if needed.)
 
 # Your compute target name in AML workspace
