@@ -1,15 +1,32 @@
 $schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
-code: model
-command: >-
-  python 
-  --
-  --
+# Folder that contains your code entry point (train.py is under src/model/)
+code: ./src
+
+type: command
+name: diabetes-logreg-dev
+display_name: Diabetes Logistic Regression (Dev)
+
+# This puts runs under a named experiment (so not ".mlruns/0")
+experiment_name: diabetes-logreg   # <<< pick any descriptive name
+
+description: Train logistic regression with MLflow autologging
+
+# What to run inside the "code" folder
+command: >
+  python model/train.py
+  --training_data ${{inputs.training_data}}
+  --reg_rate ${{inputs.reg_rate}}  # <<< wire the numeric input below
+
+
 inputs:
   training_data: 
     type: uri_folder 
-    path: 
+    path: ./experimentation/data
   reg_rate: 0.01
+# Use a curated environment with sklearn & mlflow (fine for this challenge)
 environment: azureml:AzureML-sklearn-0.24-ubuntu18.04-py37-cpu@latest
-compute: 
-experiment_name: 
-description: 
+# (You can switch later to a custom conda if needed.)
+
+# Your compute target name in AML workspace
+compute: azureml:cpu-cluster       # <<< replace with your real compute name
+

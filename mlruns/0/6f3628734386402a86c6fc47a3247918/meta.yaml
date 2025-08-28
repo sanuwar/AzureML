@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/AzureML/mlruns/0/6f3628734386402a86c6fc47a3247918/artifacts
+end_time: 1756362489725
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 6f3628734386402a86c6fc47a3247918
+run_name: auspicious-hog-14
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1756362480470
+status: 3
+tags: []
+user_id: rashi

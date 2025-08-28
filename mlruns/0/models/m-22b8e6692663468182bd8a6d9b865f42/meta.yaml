@@ -1,0 +1,10 @@
+artifact_location: file:///C:/AzureML/mlruns/0/models/m-22b8e6692663468182bd8a6d9b865f42/artifacts
+creation_timestamp: 1756362480615
+experiment_id: '0'
+last_updated_timestamp: 1756362488096
+model_id: m-22b8e6692663468182bd8a6d9b865f42
+model_type: null
+name: model
+source_run_id: 6f3628734386402a86c6fc47a3247918
+status: 2
+status_message: null
