@@ -30,20 +30,48 @@ jobs:
       - name: Install/Update Azure ML CLI v2
         run: az extension add -n ml -y || az extension update -n ml
 
-      - name: (Optional) Verify RG & WS
+      # (Optional but recommended) quick existence checks
+      - name: Verify RG/WS/compute exist
+        shell: bash
         run: |
           az group show --name "${{ env.AML_RG }}" -o table
           az ml workspace show --name "${{ env.AML_WS }}" --resource-group "${{ env.AML_RG }}" -o table
-          
-      - name: Validate AML job YAML
+          az ml compute show --name cpu-cluster --resource-group "${{ env.AML_RG }}" --workspace-name "${{ env.AML_WS }}" -o table
+
+      - name: Create inline AML job spec (pinned env, no @latest)
+        shell: bash
         run: |
-          az ml job validate \
-            --file src/job.yml \
-            --resource-group "${{ env.AML_RG }}" \
-            --workspace-name "${{ env.AML_WS }}"
+          cat > job-inline.yml <<'YAML'
+          $schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+          code: ./src
+          type: command
+          display_name: Diabetes Logistic Regression (Dev)
+          experiment_name: diabetes-logreg
+          description: Train logistic regression with MLflow autologging
+          command: >
+            python model/train.py
+            --training_data ${{inputs.training_data}}
+            --reg_rate ${{inputs.reg_rate}}
+          environment: azureml://registries/azureml/environments/AzureML-sklearn-0.24-ubuntu18.04-py37-cpu/versions/1
+          compute: azureml:cpu-cluster
+          inputs:
+            training_data:
+              type: uri_folder
+              path: ./experimentation/data
+            reg_rate:
+              type: number
+              default: 0.1
+          YAML
+
+      - name: Validate inline spec
+        shell: bash
+        run: az ml job validate --file job-inline.yml --resource-group "${{ env.AML_RG }}" --workspace-name "${{ env.AML_WS }}"
 
       - name: Submit AML job
         shell: bash
-        run: az ml job create --file src/job.yml --resource-group "${{ env.AML_RG }}" --workspace-name "${{ env.AML_WS }}" --set environment="azureml://registries/azureml/environments/AzureML-sklearn-0.24-ubuntu18.04-py37-cpu/versions/1" --set inputs.reg_rate=${{ inputs.reg_rate }}
-
-
+        run: |
+          az ml job create \
+            --file job-inline.yml \
+            --resource-group "${{ env.AML_RG }}" \
+            --workspace-name "${{ env.AML_WS }}" \
+            --set inputs.reg_rate=${{ inputs.reg_rate }}
