@@ -1,6 +1,6 @@
 $schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
 # Folder that contains your code entry point (train.py is under src/model/)
-code: ./src
+code: .
 
 type: command
 name: diabetes-logreg-dev

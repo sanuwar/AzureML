@@ -6,14 +6,34 @@ on:
 jobs:
   train:
     runs-on: ubuntu-latest
+    env:
+      AML_RG: cloud-shell-storage-eastus   # <-- replace if different
+      AML_WS: aml-ws                       # <-- replace if different
     steps:
     - name: Check out repo
-      uses: actions/checkout@main
+      uses: actions/checkout@v4
+
     - name: Install az ml extension
-      run: az extension add -n ml -y
+      run: |
+        az extension add -n ml -y || az extension update -n ml   # >>> UPDATED robust install
     - name: Azure login
-      uses: azure/login@v1
+      uses: azure/login@v2
       with:
         creds: ${{secrets.AZURE_CREDENTIALS}}
 
+# >>> ADDED: (optional) show the active sub; handy for debugging
+    - name: Show active subscription
+      run: az account show -o table
+    # >>> END
+
+    # >>> ADDED: submit your AML job defined in src/job.yml
+    - name: Submit AML job
+      run: |
+        az ml job create \
+          --file src/job.yml \
+          --resource-group "$AML_RG" \
+          --workspace-name "$AML_WS"
+          # If you want to override a value from YAML at runtime, uncomment:
+          # --set inputs.reg_rate=0.1
+    # >>> END
 
