@@ -2,38 +2,75 @@ name: Manually trigger an Azure Machine Learning job
 
 on:
   workflow_dispatch:
+    inputs:
+      reg_rate:
+        description: Regularization rate (C = 1/reg_rate)
+        required: true
+        default: "0.1"
 
 jobs:
   train:
     runs-on: ubuntu-latest
     env:
-      AML_RG: cloud-shell-storage-eastus   # <-- replace if different
-      AML_WS: aml-ws                       # <-- replace if different
+      AML_RG: cloud-shell-storage-eastus     # <-- your resource group
+      AML_WS: aml-ws                         # <-- your workspace
+      AML_COMPUTE: cpu-cluster               # <-- your compute cluster
+
     steps:
-    - name: Check out repo
-      uses: actions/checkout@v4
+      - name: Check out repo (always latest main)
+        uses: actions/checkout@v4
+        with:
+          ref: main          # <-- change if your default branch isn't 'main'
+          fetch-depth: 0
 
-    - name: Install az ml extension
-      run: |
-        az extension add -n ml -y || az extension update -n ml   # >>> UPDATED robust install
-    - name: Azure login
-      uses: azure/login@v2
-      with:
-        creds: ${{secrets.AZURE_CREDENTIALS}}
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-# >>> ADDED: (optional) show the active sub; handy for debugging
-    - name: Show active subscription
-      run: az account show -o table
-    # >>> END
+      - name: Install/Update Azure ML CLI v2
+        run: az extension add -n ml -y || az extension update -n ml
 
-    # >>> ADDED: submit your AML job defined in src/job.yml
-    - name: Submit AML job
-      run: |
-        az ml job create \
-          --file src/job.yml \
-          --resource-group "$AML_RG" \
-          --workspace-name "$AML_WS"
-          # If you want to override a value from YAML at runtime, uncomment:
-          # --set inputs.reg_rate=0.1
-    # >>> END
+      - name: Show active subscription
+        run: az account show -o table
 
+      # --- SELF-CHECKS ------------------------------------------------------
+      - name: Show commit and the job.yml used by runner
+        run: |
+          echo "Commit: $(git rev-parse --short HEAD)"
+          echo "----- src/job.yml (first 80 lines) -----"
+          sed -n '1,80p' src/job.yml
+
+      - name: Assert updated environment line (no '@latest')
+        run: |
+          if grep -q 'AzureML-sklearn-0.24-ubuntu18.04-py37-cpu@latest' src/job.yml; then
+            echo "::error:: src/job.yml still contains @latest curated env. Push your change or switch branch."
+            exit 1
+          fi
+          echo "Environment reference looks good."
+
+      - name: Verify RG, workspace, and compute exist
+        run: |
+          az group show -n "$AML_RG" -o table
+          az ml workspace show -g "$AML_RG" -w "$AML_WS" -o table
+          az ml compute show   -g "$AML_RG" -w "$AML_WS" -n "$AML_COMPUTE" -o table
+
+      - name: Validate AML job YAML
+        run: |
+          az ml job validate \
+            --file src/job.yml \
+            --resource-group "$AML_RG" \
+            --workspace-name "$AML_WS"
+
+      # --- SUBMIT -----------------------------------------------------------
+      - name: Submit AML job
+        id: submit
+        run: |
+          JOB_NAME=$(az ml job create \
+            --file src/job.yml \
+            --resource-group "$AML_RG" \
+            --workspace-name "$AML_WS" \
+            --set inputs.reg_rate=${{ inputs.reg_rate }} \
+            --query name -o tsv)
+          echo "Submitted job: $JOB_NAME"
+          echo "job_name=$JOB_NAME" >> $GITHUB_OUTPUT
