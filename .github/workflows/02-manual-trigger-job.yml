@@ -14,7 +14,7 @@ jobs:
     env:
       AML_RG: cloud-shell-storage-eastus
       AML_WS: aml-ws
-      
+
     steps:
       - name: Check out repo (latest main)
         uses: actions/checkout@v4
@@ -43,9 +43,6 @@ jobs:
             --workspace-name "${{ env.AML_WS }}"
 
       - name: Submit AML job
-        run: |
-          az ml job create \
-            --file src/job.yml \
-            --resource-group "${{ env.AML_RG }}" \
-            --workspace-name "${{ env.AML_WS }}" \ 
-            --set inputs.reg_rate=${{ inputs.reg_rate }}
+        shell: bash
+        run: az ml job create --file src/job.yml --resource-group "${{ env.AML_RG }}" --workspace-name "${{ env.AML_WS }}" --set inputs.reg_rate=${{ inputs.reg_rate }}
+
