@@ -21,7 +21,7 @@ command: >
 inputs:
   training_data: 
     type: uri_folder 
-    path: ./experimentation/data
+    path: ../experimentation/data
   reg_rate: 0.01
 # Use a curated environment with sklearn & mlflow (fine for this challenge)
 environment: azureml:AzureML-sklearn-0.24-ubuntu18.04-py37-cpu@latest
