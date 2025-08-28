@@ -30,12 +30,12 @@ jobs:
 
       - name: Install/Update Azure ML CLI v2
         run: az extension add -n ml -y || az extension update -n ml
-
-      # (optional) verify RG/WS if you want this check
+      
       - name: Verify RG and WS exist
         run: |
-          az group show -n "${{ env.AML_RG }}" -o table
-          az ml workspace show -g "${{ env.AML_RG }}" -w "${{ env.AML_WS }}" -o table
+          az group show --name "${{ env.AML_RG }}" -o table
+          az ml workspace show --name "${{ env.AML_WS }}" --resource-group "${{ env.AML_RG }}" -o table
+          az ml compute show --name cpu-cluster --resource-group "${{ env.AML_RG }}" --workspace-name "${{ env.AML_WS }}" -o table
 
       - name: Validate job YAML
         run: |
