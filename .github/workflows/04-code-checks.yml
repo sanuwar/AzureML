@@ -1,7 +1,14 @@
 name: Code checks
 
 on:
-  workflow_dispatch:
+  pull_request:            # ← run automatically on PRs to main
+    branches: [ main ]
+    # (optional) only run when these paths change
+    # paths:
+    #   - 'src/**'
+    #   - '.github/workflows/**'
+  workflow_dispatch: {}    # ← still allow manual runs
+
 
 jobs:
   job1:
